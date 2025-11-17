@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>My Simple Blog</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Marked (markdown parser) from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <h1 id="site-title">My Blog</h1>
+    <p id="site-sub">Short public blog — only I post</p>
+  </header>
+
+  <main id="main">
+    <nav id="post-list" class="post-list"></nav>
+
+    <article id="post" class="post">
+      <!-- Rendered post content appears here -->
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <small>Powered by GitHub Pages • Edit posts in <code>/posts</code></small>
+  </footer>
+
+<script>
+const POSTS_INDEX = 'posts/index.json';
+
+function parseQuery() {
+  const q = new URLSearchParams(location.search);
+  return q.get('post');
+}
+
+async function loadIndex() {
+  const res = await fetch(POSTS_INDEX);
+  if (!res.ok) throw new Error('Could not load posts index');
+  return res.json();
+}
+
+function makePostLink(post) {
+  const a = document.createElement('a');
+  a.href = '?post=' + encodeURIComponent(post.slug);
+  a.className = 'post-link';
+  a.innerHTML = `<h3>${post.title}</h3><p class="excerpt">${post.excerpt || ''}</p><time>${post.date}</time>`;
+  return a;
+}
+
+async function showIndex() {
+  try {
+    const index = await loadIndex();
+    const list = document.getElementById('post-list');
+    list.innerHTML = '';
+    index.sort((a,b)=> new Date(b.date) - new Date(a.date));
+    for (const p of index) {
+      const link = makePostLink(p);
+      list.appendChild(link);
+    }
+  } catch (e) {
+    document.getElementById('post-list').innerText = 'Failed to load posts.';
+    console.error(e);
+  }
+}
+
+async function loadPost(slug) {
+  // Expect file name convention: posts/<slug>.md
+  const path = `posts/${slug}.md`;
+  const res = await fetch(path);
+  if (!res.ok) throw new Error('Post not found: ' + path);
+  return res.text();
+}
+
+function renderMarkdown(md) {
+  // marked is available globally from CDN
+  return marked.parse(md);
+}
+
+function showError(message) {
+  const postEl = document.getElementById('post');
+  postEl.innerHTML = `<div class="error">${message}</div>`;
+}
+
+async function showPost(slug) {
+  const postEl = document.getElementById('post');
+  try {
+    const md = await loadPost(slug);
+    postEl.innerHTML = renderMarkdown(md);
+    // scroll top
+    window.scrollTo(0,0);
+  } catch (e) {
+    showError('Could not load post.');
+    console.error(e);
+  }
+}
+
+async function init() {
+  await showIndex();
+  const slug = parseQuery();
+  if (slug) {
+    await showPost(slug);
+  } else {
+    document.getElementById('post').innerHTML = `<p class="hint">Select a post from the list on the left (or below on small screens).</p>`;
+  }
+  // handle back/forward navigations
+  window.addEventListener('popstate', async ()=> {
+    const s = parseQuery();
+    if (s) await showPost(s);
+    else document.getElementById('post').innerHTML = `<p class="hint">Select a post from the list.</p>`;
+  });
+}
+init();
+</script>
+</body>
+</html>
