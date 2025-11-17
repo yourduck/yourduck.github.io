@@ -1,8 +1,15 @@
+
 [
   {
     "title": "Hello — first post",
     "date": "2025-11-17",
-    "slug": "2025-11-17-hello",
+    "slug": "2025-11-17-hello", 
     "excerpt": "This is a sample post so you can see how the blog renders Markdown."
+  },
+  {
+    "title": "Trying Cats",
+    "date": "2025-11-18", 
+    "slug": "2025-11-18-my-first-try",
+    "excerpt": "Short excerpt shown on the index of Cats."
   }
 ]
